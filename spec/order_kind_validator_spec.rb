@@ -72,5 +72,18 @@ RSpec.describe OrderKindValidator do
 
   it_does_not_fail.when_order_kind_is %w(private bundle)
   it_does_not_fail.when_order_kind_is %w(corporate bundle)
-end
 
+  it_fails_with("Order kind can be one of: 'private', 'corporate', 'bundle'")
+      .when_order_kind_is ["almost anything"]
+
+  it_does_not_fail.when_order_kind_is %w(corporate corporate)
+
+  it_fails_with("Order kind can not be 'private' and 'corporate' at the same time")
+      .when_order_kind_is %w(private corporate bundle)
+
+  it_fails_with("Order kind can not be 'private' and 'corporate' at the same time")
+      .when_order_kind_is %w(corporate private)
+
+  it_fails_with("Order kind should be 'private' or 'corporate'")
+      .when_order_kind_is %w(bundle bundle)
+end

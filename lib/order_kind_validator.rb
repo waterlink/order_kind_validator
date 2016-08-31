@@ -1,27 +1,60 @@
 class OrderKindValidator
   def validate(order)
-    kind = order[:kind]
+    kinds = order[:kind]
 
-    if kind == ["invalid"]
-      fail_with("Order kind can be one of: 'private', 'corporate', 'bundle'")
-    end
+    validate_non_empty(kinds)
 
-    if kind == ["bundle"]
-      fail_with("Order kind should be 'private' or 'corporate'")
-    end
+    validate_only_known(kinds)
+    validate_has_required(kinds)
+    validate_no_conflicting(kinds)
+  end
 
-    if kind == %w(private corporate)
-      fail_with("Order kind can not be 'private' and 'corporate' at the same time")
-    end
+  private
 
-    if kind != ["private"] && kind != ["corporate"] &&
-        kind != %w(private bundle) &&
-        kind != %w(corporate bundle)
+  def validate_non_empty(kinds)
+    if empty?(kinds)
       fail_with("Order kind can not be empty")
     end
   end
 
-  private
+  def validate_no_conflicting(kinds)
+    if has_conflicting?(kinds)
+      fail_with("Order kind can not be 'private' and 'corporate' at the same time")
+    end
+  end
+
+  def validate_has_required(kinds)
+    if has_no_required?(kinds)
+      fail_with("Order kind should be 'private' or 'corporate'")
+    end
+  end
+
+  def validate_only_known(kinds)
+    if invalid?(kinds)
+      fail_with("Order kind can be one of: 'private', 'corporate', 'bundle'")
+    end
+  end
+
+  def empty?(kinds)
+    absent_or_empty?(kinds) ||
+        kinds.any? { |kind| absent_or_empty?(kind) }
+  end
+
+  def absent_or_empty?(value)
+    value.nil? || value.empty?
+  end
+
+  def has_conflicting?(kinds)
+    (%w(private corporate) - kinds).empty?
+  end
+
+  def has_no_required?(kinds)
+    (kinds - %w(private corporate)) == kinds
+  end
+
+  def invalid?(kinds)
+    (kinds - %w(private corporate bundle)).any?
+  end
 
   def fail_with(message)
     raise InvalidOrderError.new(message)
